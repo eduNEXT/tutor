@@ -16,3 +16,5 @@ derive_settings(__name__)
 
 LOCALE_PATHS.append("/openedx/locale/contrib/locale")
 LOCALE_PATHS.append("/openedx/locale/user/locale")
+
+EOX_TENANT_LOAD_PERMISSIONS = False
