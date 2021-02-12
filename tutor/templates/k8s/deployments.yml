@@ -17,11 +17,10 @@ spec:
       containers:
         - name: cms
           image: {{ DOCKER_IMAGE_OPENEDX }}
+          imagePullPolicy: Always
           env:
           - name: SERVICE_VARIANT
             value: cms
-          - name: SETTINGS
-            value: production
           ports:
             - containerPort: 8000
           volumeMounts:
@@ -69,8 +68,6 @@ spec:
             value: cms
           - name: C_FORCE_ROOT
             value: "1"
-          - name: SETTINGS
-            value: production
           volumeMounts:
             - mountPath: /openedx/edx-platform/lms/envs/tutor/
               name: settings-lms
@@ -139,6 +136,7 @@ spec:
       containers:
         - name: lms
           image: {{ DOCKER_IMAGE_OPENEDX }}
+          imagePullPolicy: Always
           env:
           - name: SERVICE_VARIANT
             value: lms
@@ -191,8 +189,6 @@ spec:
             value: lms
           - name: C_FORCE_ROOT
             value: "1"
-          - name: SETTINGS
-            value: production
           volumeMounts:
             - mountPath: /openedx/edx-platform/lms/envs/tutor/
               name: settings-lms
