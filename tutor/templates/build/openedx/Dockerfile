@@ -65,6 +65,9 @@ RUN pip install -r ./requirements/edx/base.txt
 
 {{ patch("edx-platform-private-requirements") }}
 
+# Install whitenoise, for serving static assets
+RUN pip install "whitenoise==5.1.0"
+
 ###### Install nodejs with nodeenv in /openedx/nodeenv
 FROM python as nodejs-requirements
 ENV PATH /openedx/nodeenv/bin:/openedx/venv/bin:${PATH}
