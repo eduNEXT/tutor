@@ -27,6 +27,8 @@ OPENEDX_AWS_SECRET_ACCESS_KEY: ""
 ANDROID_RELEASE_STORE_PASSWORD: "android store password"
 ANDROID_RELEASE_KEY_PASSWORD: "android release key password"
 ANDROID_RELEASE_KEY_ALIAS: "android release key alias"
+DATA_DIR: /openedx/data/
+MEDIA_ROOT: /openedx/media/
 DEV_PROJECT_NAME: "tutor_dev"
 DOCKER_REGISTRY: "docker.io/"
 DOCKER_IMAGE_OPENEDX: "{{ DOCKER_REGISTRY }}overhangio/openedx:{{ TUTOR_VERSION }}"
