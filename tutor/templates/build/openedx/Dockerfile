@@ -35,12 +35,27 @@ RUN mkdir -p /openedx/edx-platform && \
 WORKDIR /openedx/edx-platform
 
 # Patch edx-platform
-{{ patch("edx-platform-repo-patches") }}
+ARG edx_platofrm_patches_enabled=True
+RUN if [ ${edx_platofrm_patches_enabled} = "True" ]; then \
+        curl https://github.com/overhangio/edx-platform/commit/5f21bbe77056d71ca61b97b6badcff3c1a31b858.patch | git apply -; \
+        curl https://github.com/overhangio/edx-platform/commit/089b26eed0302ed1f9a5b24c5f3e563dd44abb04.patch | git apply -; \
+        curl https://github.com/overhangio/edx-platform/commit/6dbf2eddf7a4563c04c3b51edf5e131106d69e19.patch | git apply -; \
+        curl https://github.com/edx/edx-platform/commit/80fa2cae128e2a1fd8ab298351b7b36c9d139e6c.patch | git apply -; \
+        curl https://github.com/overhangio/edx-platform/commit/58f20a0547355080eeee346104a1719ad806902e.patch | git apply -; \
+        curl https://github.com/edx/edx-platform/commit/c03857b78d6204ed3b9a3093367348ebfaaf7d04.patch | git apply -; \
+    else \
+        echo "Skip application of edx-platform repo patches"; \
+    fi
+
 
 ###### Download extra locales to /openedx/locale/contrib/locale
 FROM minimal as locales
-RUN mkdir -p /openedx/locale/contrib/locale/
-{{ patch("extra-locales") }}
+RUN cd /tmp \
+    && curl -L -o openedx-i18n.tar.gz https://github.com/openedx/openedx-i18n/archive/{{ OPENEDX_COMMON_VERSION }}.tar.gz \
+    && tar xzf /tmp/openedx-i18n.tar.gz \
+    && mkdir -p /openedx/locale/contrib \
+    && mv openedx-i18n-{{ OPENEDX_COMMON_VERSION|replace("/", "-") }}/edx-platform/locale /openedx/locale/contrib \
+    && rm -rf openedx-i18n*
 
 ###### Install python requirements in virtualenv
 FROM python as python-requirements
