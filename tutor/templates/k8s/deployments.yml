@@ -21,6 +21,8 @@ spec:
           env:
           - name: SERVICE_VARIANT
             value: cms
+          - name: SETTINGS
+            value: production
           ports:
             - containerPort: 8000
           volumeMounts:
@@ -31,8 +33,12 @@ spec:
             - mountPath: /openedx/config
               name: config
           resources:
+            limits:
+              cpu: {{ K8S_CMS_CPU_LIMIT }}
+              memory: {{ K8S_CMS_MEMORY_LIMIT }}
             requests:
-              memory: 2Gi
+              cpu: {{ K8S_CMS_CPU_REQUEST }}
+              memory: {{ K8S_CMS_MEMORY_REQUEST }}
       volumes:
         - name: settings-lms
           configMap:
@@ -43,6 +49,8 @@ spec:
         - name: config
           configMap:
             name: openedx-config
+      {{ patch("k8s-cms-deployment-spec")|indent(6) }}
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -62,12 +70,22 @@ spec:
       containers:
         - name: cms-worker
           image: {{ DOCKER_IMAGE_OPENEDX }}
+          imagePullPolicy: Always
           args: ["./manage.py", "cms", "celery", "worker", "--loglevel=info", "--hostname=edx.cms.core.default.%%h", "--maxtasksperchild", "100", "--exclude-queues=edx.lms.core.default"]
           env:
           - name: SERVICE_VARIANT
             value: cms
           - name: C_FORCE_ROOT
             value: "1"
+          - name: SETTINGS
+            value: production
+          resources:
+            limits:
+              cpu: {{ K8S_CMS_WORKER_CPU_LIMIT }}
+              memory: {{ K8S_CMS_WORKER_MEMORY_LIMIT }}
+            requests:
+              cpu: {{ K8S_CMS_WORKER_CPU_REQUEST }}
+              memory: {{ K8S_CMS_WORKER_MEMORY_REQUEST }}
           volumeMounts:
             - mountPath: /openedx/edx-platform/lms/envs/tutor/
               name: settings-lms
@@ -85,6 +103,7 @@ spec:
         - name: config
           configMap:
             name: openedx-config
+      {{ patch("k8s-cms-worker-deployment-spec")|indent(6) }}
 {% if ACTIVATE_FORUM %}
 ---
 apiVersion: apps/v1
@@ -152,8 +171,12 @@ spec:
             - mountPath: /openedx/config
               name: config
           resources:
+            limits:
+              cpu: {{ K8S_LMS_CPU_LIMIT }}
+              memory: {{ K8S_LMS_MEMORY_LIMIT }}
             requests:
-              memory: 2Gi
+              cpu: {{ K8S_LMS_CPU_REQUEST }}
+              memory: {{ K8S_LMS_MEMORY_REQUEST }}
       volumes:
         - name: settings-lms
           configMap:
@@ -164,6 +187,7 @@ spec:
         - name: config
           configMap:
             name: openedx-config
+      {{ patch("k8s-lms-deployment-spec")|indent(6) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -183,12 +207,22 @@ spec:
       containers:
         - name: lms-worker
           image: {{ DOCKER_IMAGE_OPENEDX }}
+          imagePullPolicy: Always
           args: ["./manage.py", "lms", "celery", "worker", "--loglevel=info", "--hostname=edx.lms.core.default.%%h", "--maxtasksperchild", "100", "--exclude-queues=edx.cms.core.default"]
           env:
           - name: SERVICE_VARIANT
             value: lms
           - name: C_FORCE_ROOT
             value: "1"
+          - name: SETTINGS
+            value: production
+          resources:
+            limits:
+              cpu: {{ K8S_LMS_WORKER_CPU_LIMIT }}
+              memory: {{ K8S_LMS_WORKER_MEMORY_LIMIT }}
+            requests:
+              cpu: {{ K8S_LMS_WORKER_CPU_REQUEST }}
+              memory: {{ K8S_LMS_WORKER_MEMORY_REQUEST }}
           volumeMounts:
             - mountPath: /openedx/edx-platform/lms/envs/tutor/
               name: settings-lms
@@ -206,6 +240,7 @@ spec:
         - name: config
           configMap:
             name: openedx-config
+      {{ patch("k8s-lms-worker-deployment-spec")|indent(6) }}
 {% if ACTIVATE_ELASTICSEARCH %}
 ---
 apiVersion: apps/v1
@@ -380,6 +415,13 @@ spec:
       containers:
         - name: nginx
           image: {{ DOCKER_IMAGE_NGINX }}
+          resources:
+            limits:
+              cpu: "50m"
+              memory: "200Mi"
+            requests:
+              cpu: "50m"
+              memory: "200Mi"
           volumeMounts:
             - mountPath: /etc/nginx/conf.d/
               name: config
