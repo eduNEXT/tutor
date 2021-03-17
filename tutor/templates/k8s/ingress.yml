@@ -23,7 +23,7 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: nginx
+          serviceName: nginx-gonzalo
           servicePort: {% if ACTIVATE_HTTPS %}443{% else %}80{% endif %}{% endfor %}
   {{ patch("k8s-ingress-rules")|indent(2) }}
   {% if ACTIVATE_HTTPS %}
