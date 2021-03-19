@@ -30,12 +30,17 @@ RUN curl -L -o /tmp/dockerize.tar.gz https://github.com/jwilder/dockerize/releas
 FROM minimal as code
 ARG EDX_PLATFORM_REPOSITORY=https://github.com/edx/edx-platform.git
 ARG EDX_PLATFORM_VERSION={{ OPENEDX_COMMON_VERSION }}
-RUN mkdir -p /openedx/edx-platform && \
-    git clone $EDX_PLATFORM_REPOSITORY --branch $EDX_PLATFORM_VERSION --depth 1 /openedx/edx-platform
+RUN mkdir -p /openedx/edx-platform
+RUN if [ ${edx_platform_clone_enabled} = "True" ]; then \
+        git clone $EDX_PLATFORM_REPOSITORY --branch $EDX_PLATFORM_VERSION --depth 1 /openedx/edx-platform \
+    fi
 WORKDIR /openedx/edx-platform
 
+{{ patch("edx-platform-code") }}
+
+
 # Patch edx-platform
-ARG edx_platofrm_patches_enabled=True
+ARG edx_platform_patches_enabled=True
 RUN if [ ${edx_platofrm_patches_enabled} = "True" ]; then \
         curl https://github.com/overhangio/edx-platform/commit/5f21bbe77056d71ca61b97b6badcff3c1a31b858.patch | git apply -; \
         curl https://github.com/overhangio/edx-platform/commit/089b26eed0302ed1f9a5b24c5f3e563dd44abb04.patch | git apply -; \
