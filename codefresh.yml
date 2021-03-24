@@ -22,8 +22,7 @@ steps:
     title: Pushing to Docker Registry
     type: push
     stage: upload
-    tag: '${{CF_BRANCH}}'
+    tag: 'master'
     candidate: '${{MyAppDockerImage}}'
     image_name: neonesoft/tutordemo #Change kkapelon to your dockerhub username
     registry: DefaultDockerHubRegistry # Name of your integration as was defined in the Registry screen
-    
