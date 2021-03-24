@@ -2,6 +2,7 @@ version: '1.0'
 stages:
   - checkout
   - package
+  - test  
 steps:
   main_clone:
     title: Cloning main repository...
@@ -10,11 +11,18 @@ steps:
     revision: '${{CF_REVISION}}'
     stage: checkout
   MyAppDockerImage:
-    title: Building Docker Tutor Image
+    title: Building Docker Image
     type: build
     stage: package
-    image_name: tutor-image
+    image_name: my-app-image
     working_directory: ./
-    tag: v1.0.0
+    tag: v1.0.1
     dockerfile: Dockerfile
+  MyUnitTests:
+    title: Running Unit tests
+    image: '${{MyAppDockerImage}}'
+    stage: test 
+    commands: 
+      - pip install pytest
+      - pytest   
   
