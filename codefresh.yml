@@ -2,7 +2,7 @@ version: '1.0'
 stages:
   - checkout
   - package
-  - test  
+  - upload
 steps:
   main_clone:
     title: Cloning main repository...
@@ -18,11 +18,12 @@ steps:
     working_directory: ./
     tag: v1.0.1
     dockerfile: Dockerfile
-  MyUnitTests:
-    title: Running Unit tests
-    image: '${{MyAppDockerImage}}'
-    stage: test 
-    commands: 
-      - pip install pytest
-      - pytest   
-  
+  MyPushStep:
+    title: Pushing to Docker Registry
+    type: push
+    stage: upload
+    tag: '${{CF_BRANCH}}'
+    candidate: '${{MyAppDockerImage}}'
+    image_name: neonesoft/tutordemo #Change kkapelon to your dockerhub username
+    registry: DefaultDockerHubRegistry # Name of your integration as was defined in the Registry screen
+    
