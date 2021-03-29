@@ -96,7 +96,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx
+  name: nginx-jhony
 spec:
   type: NodePort
   ports:
@@ -105,7 +105,7 @@ spec:
     - port: 443
       name: https
   selector:
-    app.kubernetes.io/name: nginx
+    app.kubernetes.io/name: nginx-jhony
 {% if ACTIVATE_RABBITMQ %}
 ---
 apiVersion: v1
