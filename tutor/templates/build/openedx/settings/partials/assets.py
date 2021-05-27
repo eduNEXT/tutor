@@ -17,3 +17,5 @@ XQUEUE_INTERFACE = {
 DATABASES = {
     "default": {},
 }
+
+EOX_TENANT_LOAD_PERMISSIONS = False

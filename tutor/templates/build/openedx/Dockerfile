@@ -35,28 +35,18 @@ RUN mkdir -p /openedx/edx-platform && \
 WORKDIR /openedx/edx-platform
 
 # Patch edx-platform
-# Get rid of lepl-related warnings
-# https://github.com/edx/edx-platform/pull/24059
-# https://github.com/overhangio/edx-platform/tree/overhangio/lepl-rfc6266-warning
-RUN curl https://github.com/overhangio/edx-platform/commit/5f21bbe77056d71ca61b97b6badcff3c1a31b858.patch | git apply -
-# Fix creation of LTI provider objects
-# https://github.com/edx/edx-platform/pull/24055
-# https://github.com/overhangio/edx-platform/tree/regisb/fix-lti-provider-admin
-RUN curl https://github.com/overhangio/edx-platform/commit/089b26eed0302ed1f9a5b24c5f3e563dd44abb04.patch | git apply -
-# Fix problem viewing when CSMH is disabled
-# https://github.com/edx/edx-platform/pull/24237
-# https://github.com/overhangio/edx-platform/tree/overhangio/fix-no-csmh
-RUN curl https://github.com/overhangio/edx-platform/commit/6dbf2eddf7a4563c04c3b51edf5e131106d69e19.patch | git apply -
-# Fix upload of video transcripts to s3
-# https://github.com/edx/edx-platform/pull/24800
-RUN curl https://github.com/edx/edx-platform/commit/80fa2cae128e2a1fd8ab298351b7b36c9d139e6c.patch | git apply -
-# Make it possible to disable learner records globally
-# https://github.com/edx/edx-platform/pull/25182
-# https://github.com/overhangio/edx-platform/tree/overhangio/disable-learner-records-from-settings
-RUN curl https://github.com/overhangio/edx-platform/commit/58f20a0547355080eeee346104a1719ad806902e.patch | git apply -
-# Fix security issues
-# https://github.com/edx/edx-platform/pull/25782/commits
-RUN curl https://github.com/edx/edx-platform/commit/c03857b78d6204ed3b9a3093367348ebfaaf7d04.patch | git apply -
+ARG edx_platofrm_patches_enabled=True
+RUN if [ ${edx_platofrm_patches_enabled} = "True" ]; then \
+        curl https://github.com/overhangio/edx-platform/commit/5f21bbe77056d71ca61b97b6badcff3c1a31b858.patch | git apply -; \
+        curl https://github.com/overhangio/edx-platform/commit/089b26eed0302ed1f9a5b24c5f3e563dd44abb04.patch | git apply -; \
+        curl https://github.com/overhangio/edx-platform/commit/6dbf2eddf7a4563c04c3b51edf5e131106d69e19.patch | git apply -; \
+        curl https://github.com/edx/edx-platform/commit/80fa2cae128e2a1fd8ab298351b7b36c9d139e6c.patch | git apply -; \
+        curl https://github.com/overhangio/edx-platform/commit/58f20a0547355080eeee346104a1719ad806902e.patch | git apply -; \
+        curl https://github.com/edx/edx-platform/commit/c03857b78d6204ed3b9a3093367348ebfaaf7d04.patch | git apply -; \
+    else \
+        echo "Skip application of edx-platform repo patches"; \
+    fi
+
 
 ###### Download extra locales to /openedx/locale/contrib/locale
 FROM minimal as locales
@@ -86,20 +76,12 @@ RUN pip install setuptools==44.1.0 pip==20.0.2 wheel==0.34.2
 # Install base requirements
 RUN pip install -r ./requirements/edx/base.txt
 
-# Install patched version of ora2
-RUN pip install https://github.com/overhangio/edx-ora2/archive/overhangio/boto2to3.zip
+{{ patch("edx-platform-extra-requirements") }}
 
-# Install scorm xblock
-RUN pip install "openedx-scorm-xblock<11.0.0,>=10.0.1"
+{{ patch("edx-platform-private-requirements") }}
 
 # Install whitenoise, for serving static assets
 RUN pip install "whitenoise==5.1.0"
-
-# Install private requirements: this is useful for installing custom xblocks.
-COPY ./requirements/ /openedx/requirements
-RUN cd /openedx/requirements/ \
-  && touch ./private.txt \
-  && pip install -r ./private.txt
 
 ###### Install nodejs with nodeenv in /openedx/nodeenv
 FROM python as nodejs-requirements
@@ -128,7 +110,6 @@ COPY --from=code /openedx/edx-platform /openedx/edx-platform
 COPY --from=locales /openedx/locale/contrib/locale /openedx/locale/contrib/locale
 COPY --from=python /opt/pyenv /opt/pyenv
 COPY --from=python-requirements /openedx/venv /openedx/venv
-COPY --from=python-requirements /openedx/requirements /openedx/requirements
 COPY --from=nodejs-requirements /openedx/nodeenv /openedx/nodeenv
 COPY --from=nodejs-requirements /openedx/edx-platform/node_modules /openedx/edx-platform/node_modules
 

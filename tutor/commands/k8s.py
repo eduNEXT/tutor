@@ -42,6 +42,7 @@ def quickstart(context, non_interactive):
 @click.command(help="Run all configured Open edX services")
 @click.pass_obj
 def start(context):
+    config = tutor_config.load(context.root)
     # Create namespace
     utils.kubectl(
         "apply",
@@ -52,14 +53,19 @@ def start(context):
         "app.kubernetes.io/component=namespace",
     )
     # Create volumes
-    utils.kubectl(
-        "apply",
-        "--kustomize",
-        tutor_env.pathjoin(context.root),
-        "--wait",
-        "--selector",
-        "app.kubernetes.io/component=volume",
-    )
+    create_volumes = False
+    for service in ["mysql", "elasticsearch", "mongodb"]:
+        if tutor_config.is_service_activated(config, service):
+            create_volumes = True
+    if create_volumes:
+        utils.kubectl(
+            "apply",
+            "--kustomize",
+            tutor_env.pathjoin(context.root),
+            "--wait",
+            "--selector",
+            "app.kubernetes.io/component=volume",
+        )
     # Create everything else except jobs, ingress and issuer
     utils.kubectl(
         "apply",
