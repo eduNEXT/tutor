@@ -4,8 +4,8 @@ FROM docker.io/ubuntu:20.04 AS minimal
 LABEL maintainer="Overhang.io <contact@overhang.io>"
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+RUN --mount=type=cache,mode=0755,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,mode=0755,target=/var/lib/apt,sharing=locked \
     apt update && \
     apt install -y build-essential curl git language-pack-en
 ENV LC_ALL=en_US.UTF-8
@@ -14,8 +14,8 @@ ENV LC_ALL=en_US.UTF-8
 ###### Install python with pyenv in /opt/pyenv and create virtualenv in /openedx/venv
 FROM minimal AS python
 # https://github.com/pyenv/pyenv/wiki/Common-build-problems#prerequisites
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+RUN --mount=type=cache,mode=0755,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,mode=0755,target=/var/lib/apt,sharing=locked \
     apt update && \
     apt install -y libssl-dev zlib1g-dev libbz2-dev \
     libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
@@ -80,13 +80,13 @@ ENV PATH=/openedx/venv/bin:${PATH}
 ENV VIRTUAL_ENV=/openedx/venv/
 ENV XDG_CACHE_HOME=/openedx/.cache
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+RUN --mount=type=cache,mode=0755,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,mode=0755,target=/var/lib/apt,sharing=locked \
     apt update \
     && apt install -y software-properties-common libmysqlclient-dev libxmlsec1-dev libgeos-dev
 
 # Install the right version of pip/setuptools
-RUN --mount=type=cache,target=/openedx/.cache/pip,sharing=shared \
+RUN --mount=type=cache,mode=0755,target=/openedx/.cache/pip,sharing=shared \
     pip install \
     # https://pypi.org/project/setuptools/
     # https://pypi.org/project/pip/
@@ -95,11 +95,11 @@ RUN --mount=type=cache,target=/openedx/.cache/pip,sharing=shared \
 
 # Install base requirements
 RUN --mount=type=bind,from=edx-platform,source=/requirements/edx/base.txt,target=/openedx/edx-platform/requirements/edx/base.txt \
-    --mount=type=cache,target=/openedx/.cache/pip,sharing=shared \
+    --mount=type=cache,mode=0755,target=/openedx/.cache/pip,sharing=shared \
     pip install -r /openedx/edx-platform/requirements/edx/base.txt
 
 # Install extra requirements
-RUN --mount=type=cache,target=/openedx/.cache/pip,sharing=shared \
+RUN --mount=type=cache,mode=0755,target=/openedx/.cache/pip,sharing=shared \
     pip install \
     # Use redis as a django cache https://pypi.org/project/django-redis/
     django-redis==5.4.0 \
@@ -112,7 +112,7 @@ RUN --mount=type=cache,target=/openedx/.cache/pip,sharing=shared \
 RUN pip install "openedx-scorm-xblock>=18.0.0,<19.0.0"
 
 {% for extra_requirements in OPENEDX_EXTRA_PIP_REQUIREMENTS %}
-RUN --mount=type=cache,target=/openedx/.cache/pip,sharing=shared \
+RUN --mount=type=cache,mode=0755,target=/openedx/.cache/pip,sharing=shared \
     pip install '{{ extra_requirements }}'
 {% endfor %}
 
@@ -131,15 +131,15 @@ WORKDIR /openedx/edx-platform
 RUN --mount=type=bind,from=edx-platform,source=/package.json,target=/openedx/edx-platform/package.json \
     --mount=type=bind,from=edx-platform,source=/package-lock.json,target=/openedx/edx-platform/package-lock.json \
     --mount=type=bind,from=edx-platform,source=/scripts/copy-node-modules.sh,target=/openedx/edx-platform/scripts/copy-node-modules.sh \
-    --mount=type=cache,target=/root/.npm,sharing=shared \
+    --mount=type=cache,mode=0755,target=/root/.npm,sharing=shared \
     npm clean-install --no-audit --registry=$NPM_REGISTRY
 
 ###### Production image with system and python requirements
 FROM minimal AS production
 
 # Install system requirements
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+RUN --mount=type=cache,mode=0755,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,mode=0755,target=/var/lib/apt,sharing=locked \
     apt update \
     && apt install -y gettext gfortran graphviz graphviz-dev libffi-dev libfreetype6-dev libgeos-dev libjpeg8-dev liblapack-dev libmysqlclient-dev libpng-dev libsqlite3-dev libxmlsec1-dev lynx mysql-client ntp pkg-config rdfind
 
@@ -257,18 +257,18 @@ FROM production AS development
 
 # Install useful system requirements (as root)
 USER root
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+RUN --mount=type=cache,mode=0755,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,mode=0755,target=/var/lib/apt,sharing=locked \
     apt update && \
     apt install -y vim iputils-ping dnsutils telnet
 USER app
 
 # Install dev python requirements
-RUN --mount=type=cache,target=/openedx/.cache/pip,sharing=shared \
+RUN --mount=type=cache,mode=0755,target=/openedx/.cache/pip,sharing=shared \
     pip install -r requirements/edx/development.txt
 # https://pypi.org/project/ipdb/
 # https://pypi.org/project/ipython (>=Python 3.10 started with 8.20)
-RUN --mount=type=cache,target=/openedx/.cache/pip,sharing=shared \
+RUN --mount=type=cache,mode=0755,target=/openedx/.cache/pip,sharing=shared \
     pip install ipdb==0.13.13 ipython==8.24.0
 
 {# Re-install mounted requirements, otherwise they will be superseded by upstream reqs #}
