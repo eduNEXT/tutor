@@ -63,3 +63,5 @@ services:
       {%- endfor %}
     depends_on:
       - cms
+
+  {{ patch("local-docker-compose-prod-services")|indent(2) }}

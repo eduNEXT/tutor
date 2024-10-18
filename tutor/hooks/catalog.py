@@ -515,8 +515,8 @@ class Filters:
     IS_FILE_RENDERED: Filter[bool, [str]] = Filter()
 
 
-    LMS_WORKER_COMMAND: Filter[list[str]] = Filter
-    CMS_WORKER_COMMAND: Filter[dict[str, str]] = Filter
+    LMS_WORKER_COMMAND: Filter[list[str]] = Filter()
+    CMS_WORKER_COMMAND: Filter[dict[str, str]] = Filter()
 
 
 class Contexts:

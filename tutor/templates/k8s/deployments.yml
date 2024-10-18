@@ -257,7 +257,7 @@ spec:
           args:
           - "celery"
           - "worker"
-          - "--app=lms.celery"{% for setting, value in iter_cms_celery_parameters().items() %}
+          - "--app=lms.celery"{% for setting, value in iter_lms_celery_parameters().items() %}
           - "--{{setting}}={{value}}"{% endfor %}
           env:
           - name: SERVICE_VARIANT
@@ -283,7 +283,6 @@ spec:
         - name: config
           configMap:
             name: openedx-config
----
 {% if RUN_ELASTICSEARCH %}
 ---
 apiVersion: apps/v1
