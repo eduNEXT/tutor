@@ -144,60 +144,65 @@ hooks.Filters.ENV_TEMPLATE_VARIABLES.add_item(
 )
 
 
-@hooks.Filters.CELERY_WORKERS_CONFIG.add(priority=hooks.priorities.HIGH)
-def _add_default_celery_queues(worker_configs):
+@hooks.Filters.LMS_WORKER_COMMAND.add(priority=hooks.priorities.HIGH)
+def _add_default_lms_worker_parameters(worker_configs):
     worker_configs = {
-        "lms": {
-            "default": {
-                "concurrency": 100,
-                "pool": "gevent",
-            },
-            "high": {
-                "concurrency": 1,
-                "pool": "prefork",
-            },
-            "high_mem": { # Not sure what's the difference this one and high
-                "concurrency": 1,
-                "pool": "prefork",
-            },
-        },
-        "cms": {
-            "default": {
-                "concurrency": 100,
-                "pool": "gevent",
-            },
-            "high": {
-                "concurrency": 1,
-                "pool": "prefork",
-            },
-            "low": { # Not sure how to is this used
-                "concurrency": 100,
-                "pool": "gevent",
-            },
-        },
+        "loglevel": "info",
+        "hostname": "edx.lms.core.default.%%h",
+        "queues": "edx.lms.core.default,edx.lms.core.high,edx.lms.core.high_mem",
+        "max-tasks-per-child": "100",
+    }
+    return worker_configs
+
+
+@hooks.Filters.CMS_WORKER_COMMAND.add(priority=hooks.priorities.HIGH)
+def _add_default_cms_worker_parameters(worker_configs):
+    worker_configs = {
+        "loglevel": "info",
+        "hostname": "edx.cms.core.default.%%h",
+        "queues": "edx.cms.core.default,edx.cms.core.high,edx.cms.core.low",
+        "max-tasks-per-child": "100"
     }
     return worker_configs
 
 
 @hooks.lru_cache
-def get_celery_workers_config() -> dict[str, dict[str, t.Any]]:
+def get_cms_celery_parameters() -> dict[str, dict[str, t.Any]]:
     """
     This function is cached for performance.
     """
-    return hooks.Filters.CELERY_WORKERS_CONFIG.apply({})
+    return hooks.Filters.CMS_WORKER_COMMAND.apply({})
 
 
-def iter_celery_workers_config() -> dict[str, dict[str, t.Any]]:
+@hooks.lru_cache
+def get_lms_celery_parameters() -> dict[str, dict[str, t.Any]]:
+    """
+    This function is cached for performance.
+    """
+    return hooks.Filters.LMS_WORKER_COMMAND.apply({})
+
+
+def iter_cms_celery_parameters() -> dict[str, dict[str, t.Any]]:
     """
     Yield:
 
         (name, dict)
     """
-    return {name: config for name, config in get_celery_workers_config().items()}
+    return {name: config for name, config in get_cms_celery_parameters().items()}
+
+
+def iter_lms_celery_parameters() -> dict[str, dict[str, t.Any]]:
+    """
+    Yield:
+
+        (name, dict)
+    """
+    return {name: config for name, config in get_lms_celery_parameters().items()}
 
 
 hooks.Filters.ENV_TEMPLATE_VARIABLES.add_items(
     [
-        ("iter_celery_workers_config", iter_celery_workers_config),
+        ("iter_cms_celery_parameters", iter_cms_celery_parameters),
+        ("iter_lms_celery_parameters", iter_lms_celery_parameters),
     ]
 )

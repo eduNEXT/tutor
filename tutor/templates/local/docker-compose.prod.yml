@@ -26,28 +26,40 @@ services:
     {% endif %}
 
   ############# LMS and CMS workers
-  {% for service, variants in iter_celery_workers_config().items() %}
-  {% for variant, config in variants.items() %}
-  {% set deployment = service + "-" + "worker" + "-" + variant.replace("_", "-") %}
-  {{deployment}}:
+  lms-worker:
     image: {{ DOCKER_IMAGE_OPENEDX }}
     environment:
-      SERVICE_VARIANT: {{service}}
-      DJANGO_SETTINGS_MODULE: {{service}}.envs.tutor.production
-    command: celery --app={{service}}.celery worker --loglevel=info --hostname=edx.{{service}}.core.default.%%h --queues=edx.{{service}}.core.{{variant}}{% for param, value in config.items() %} --{{param}}={{value}}{%endfor%}
+      SERVICE_VARIANT: lms
+      DJANGO_SETTINGS_MODULE: lms.envs.tutor.production
+    command: celery worker --app=lms.celery{% for setting, value in iter_lms_celery_parameters().items() %} "--{{setting}}={{value}}"{% endfor %}
     restart: unless-stopped
     volumes:
       - ../apps/openedx/settings/lms:/openedx/edx-platform/lms/envs/tutor:ro
       - ../apps/openedx/settings/cms:/openedx/edx-platform/cms/envs/tutor:ro
       - ../apps/openedx/config:/openedx/config:ro
-      - ../../data/{{service}}:/openedx/data
+      - ../../data/lms:/openedx/data
       - ../../data/openedx-media:/openedx/media
-      {%- for mount in iter_mounts(MOUNTS, "openedx", service + "-worker") %}
+      {%- for mount in iter_mounts(MOUNTS, "openedx", "lms-worker") %}
       - {{ mount }}
       {%- endfor %}
     depends_on:
-      - {{service}}
-    {% endfor %}
-    {% endfor %}
+      - lms
 
-  {{ patch("local-docker-compose-prod-services")|indent(2) }}
+  cms-worker:
+    image: {{ DOCKER_IMAGE_OPENEDX }}
+    environment:
+      SERVICE_VARIANT: cms
+      DJANGO_SETTINGS_MODULE: cms.envs.tutor.production
+    command: celery worker --app=cms.celery{% for setting, value in iter_cms_celery_parameters().items() %} "--{{setting}}={{value}}"{% endfor %}
+    restart: unless-stopped
+    volumes:
+      - ../apps/openedx/settings/lms:/openedx/edx-platform/lms/envs/tutor:ro
+      - ../apps/openedx/settings/cms:/openedx/edx-platform/cms/envs/tutor:ro
+      - ../apps/openedx/config:/openedx/config:ro
+      - ../../data/cms:/openedx/data
+      - ../../data/openedx-media:/openedx/media
+      {%- for mount in iter_mounts(MOUNTS, "openedx", "cms-worker") %}
+      - {{ mount }}
+      {%- endfor %}
+    depends_on:
+      - cms
